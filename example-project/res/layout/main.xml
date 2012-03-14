@@ -3,10 +3,30 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/hello" />
-
+	<LinearLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal">
+		<Button android:id="@+id/loadEmbeddedImage"
+		    android:text="Load embedded"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"/>
+		<Button android:id="@+id/findAndLoadImage"
+		    android:text="Find &amp; Load"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"/>
+		<Button android:id="@+id/captureImage"
+		    android:text="Capture &amp; Load"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"/>
+	</LinearLayout>
+	
+	<ImageView android:id="@+id/imageView"
+	    android:src="@drawable/ic_launcher"
+	    android:scaleType="fitCenter"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"/>
 </LinearLayout>

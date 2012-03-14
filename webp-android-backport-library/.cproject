@@ -20,7 +20,7 @@
 					<folderInfo id="com.android.toolchain.gcc.1002828156.630308326" name="/" resourcePath="">
 						<toolChain id="com.android.toolchain.gcc.893758306" name="com.android.toolchain.gcc" superClass="com.android.toolchain.gcc">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.android.targetPlatform.299449552" name="Android Platform" osList="all" superClass="com.android.targetPlatform"/>
-							<builder id="com.android.builder.2096371182" keepEnvironmentInBuildfile="false" managedBuildOn="false" superClass="com.android.builder">
+							<builder arguments="${ANDROID_NDK}/ndk-build -j 16" command="sh" id="com.android.builder.2096371182" keepEnvironmentInBuildfile="false" managedBuildOn="false" superClass="com.android.builder">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="libs"/>
 								</outputEntries>
@@ -63,5 +63,8 @@
 		<scannerConfigBuildInfo instanceId="com.android.toolchain.gcc.1002828156;com.android.toolchain.gcc.1002828156.630308326;com.android.tool.compiler.c.177978122;com.android.tool.compiler.c.input.1256558191">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile"/>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/webp-android-backport-library"/>
 	</storageModule>
 </cproject>

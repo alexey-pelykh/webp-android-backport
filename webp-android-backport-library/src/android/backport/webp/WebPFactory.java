@@ -9,8 +9,9 @@ import android.graphics.BitmapFactory;
  */
 public final class WebPFactory {
 	
+	// Load library at class loading
 	static {
-		System.loadLibrary("webpfactory");
+		System.loadLibrary("webpbackport");
 	};
 
 	/**
