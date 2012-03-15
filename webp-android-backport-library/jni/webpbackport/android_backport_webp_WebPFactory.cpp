@@ -59,7 +59,6 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 
 	// Create bitmap
 	jobject value__ARGB_8888 = jniEnv->GetStaticObjectField(jrefs::android::graphics::Bitmap->Config.jclassRef, jrefs::android::graphics::Bitmap->Config.ARGB_8888);
-	__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Creating Bitmap with %p format ref", value__ARGB_8888);
 	jobject outputBitmap = jniEnv->CallStaticObjectMethod(jrefs::android::graphics::Bitmap->jclassRef, jrefs::android::graphics::Bitmap->createBitmap,
 		(jint)bitmapWidth, (jint)bitmapHeight,
 		value__ARGB_8888);
@@ -69,7 +68,7 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to allocate Bitmap");
 		return 0;
 	}
-	//outputBitmap = jniEnv->NewLocalRef(outputBitmap);
+	outputBitmap = jniEnv->NewLocalRef(outputBitmap);
 
 	// Get information about bitmap passed
 	AndroidBitmapInfo bitmapInfo;
@@ -99,22 +98,6 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 		jniEnv->DeleteLocalRef(outputBitmap);
 		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to unlock Bitmap pixels");
 		return 0;
-	}
-
-	// Transcode buffer from ARGB to RGBA
-	uint8_t* buf = (uint8_t*)bitmapPixels;
-	for (int y = 0; y < bitmapInfo.height; ++y)
-	{
-		uint8_t* row = buf + y * bitmapInfo.stride;
-		for(int x = 0; x < bitmapInfo.width; x++)
-		{
-			uint8_t savedAlpha = row[0];
-			row[0] = row[1];
-			row[1] = row[2];
-			row[2] = row[3];
-			row[3] = savedAlpha;
-			row += 4;
-		}
 	}
 
 	// Unlock pixels
