@@ -172,17 +172,17 @@ static inline unsigned SkB16ToB32(unsigned b)
 
 typedef void (*ScanlineImporter)(const uint8_t* in, uint8_t* out, int width);
 
-static void ARGB_8888_To_RGBA(const uint8_t* in, uint8_t* rgb, int width)
+static void ARGB_8888_To_RGBA(const uint8_t* in, uint8_t* rgba, int width)
 {
 	const uint32_t* src = (const uint32_t*)in;
 	for (int i = 0; i < width; ++i)
 	{
 		const uint32_t c = *src++;
-		rgb[0] = SkGetPackedR32(c);
-		rgb[1] = SkGetPackedG32(c);
-		rgb[2] = SkGetPackedB32(c);
-		rgb[3] = SkGetPackedA32(c);
-		rgb += 4;
+		rgba[0] = SkGetPackedB32(c);
+		rgba[1] = SkGetPackedG32(c);
+		rgba[2] = SkGetPackedR32(c);
+		rgba[3] = SkGetPackedA32(c);
+		rgba += 4;
 	}
 }
 
@@ -192,9 +192,9 @@ static void RGB_565_To_RGB(const uint8_t* in, uint8_t* rgb, int width)
 	for (int i = 0; i < width; ++i)
 	{
 		const uint16_t c = *src++;
-		rgb[0] = SkPacked16ToR32(c);
+		rgb[0] = SkPacked16ToB32(c);
 		rgb[1] = SkPacked16ToG32(c);
-		rgb[2] = SkPacked16ToB32(c);
+		rgb[2] = SkPacked16ToR32(c);
 		rgb += 3;
 	}
 }
@@ -285,9 +285,15 @@ JNIEXPORT jbyteArray JNICALL Java_android_backport_webp_WebPFactory_nativeEncode
 	size_t encodedImageSize = 0;
 	uint8_t* encodedImageData = 0;
 	if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888)
-		encodedImageSize = WebPEncodeRGB(dst, bitmapInfo.width, bitmapInfo.height, dst_stride, quality, &encodedImageData);
-	else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565)
+	{
+		__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Encoding %dx%d image as RGBA_8888", bitmapInfo.width, bitmapInfo.height);
 		encodedImageSize = WebPEncodeRGBA(dst, bitmapInfo.width, bitmapInfo.height, dst_stride, quality, &encodedImageData);
+	}
+	else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565)
+	{
+		__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Encoding %dx%d image as RGBA_565", bitmapInfo.width, bitmapInfo.height);
+		encodedImageSize = WebPEncodeRGB(dst, bitmapInfo.width, bitmapInfo.height, dst_stride, quality, &encodedImageData);
+	}
 	delete[] dst;
 	if(encodedImageSize == 0)
 	{

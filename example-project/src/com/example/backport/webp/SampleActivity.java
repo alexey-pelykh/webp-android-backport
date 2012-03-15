@@ -2,6 +2,9 @@ package com.example.backport.webp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import android.app.Activity;
@@ -103,6 +106,15 @@ public class SampleActivity extends Activity {
 
 				Bitmap selectedBitmap = BitmapFactory.decodeFile(filePath);
 				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap, 100);
+				try {
+					FileOutputStream dumpStream = new FileOutputStream(new File(Environment.getExternalStorageDirectory(), "dump.webp"));
+					dumpStream.write(webpImageData);
+					dumpStream.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				Bitmap webpBitmap = WebPFactory.nativeDecodeByteArray(webpImageData, null);
 				_imageView.setImageBitmap(webpBitmap);
 			}
@@ -111,6 +123,15 @@ public class SampleActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				Bitmap selectedBitmap = BitmapFactory.decodeFile(_captureDestination.getAbsolutePath());
 				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap, 100);
+				try {
+					FileOutputStream dumpStream = new FileOutputStream(new File(Environment.getExternalStorageDirectory(), "dump.webp"));
+					dumpStream.write(webpImageData);
+					dumpStream.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				Bitmap webpBitmap = WebPFactory.nativeDecodeByteArray(webpImageData, null);
 				_imageView.setImageBitmap(webpBitmap);
 				
