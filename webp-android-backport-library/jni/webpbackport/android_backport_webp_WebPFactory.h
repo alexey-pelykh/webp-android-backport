@@ -18,10 +18,10 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 /*
  * Class:     android_backport_webp_WebPFactory
  * Method:    nativeEncodeBitmap
- * Signature: (Landroid/graphics/Bitmap;)[B
+ * Signature: (Landroid/graphics/Bitmap;I)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_android_backport_webp_WebPFactory_nativeEncodeBitmap
-  (JNIEnv *, jclass, jobject);
+  (JNIEnv *, jclass, jobject, jint quality);
 
 #ifdef __cplusplus
 }

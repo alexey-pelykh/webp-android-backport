@@ -102,7 +102,7 @@ public class SampleActivity extends Activity {
 				cursor.close();
 
 				Bitmap selectedBitmap = BitmapFactory.decodeFile(filePath);
-				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap);
+				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap, 100);
 				Bitmap webpBitmap = WebPFactory.nativeDecodeByteArray(webpImageData, null);
 				_imageView.setImageBitmap(webpBitmap);
 			}
@@ -110,7 +110,7 @@ public class SampleActivity extends Activity {
 		case REQUEST_CODE__IMAGE_CAPTURED:
 			if (resultCode == RESULT_OK) {
 				Bitmap selectedBitmap = BitmapFactory.decodeFile(_captureDestination.getAbsolutePath());
-				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap);
+				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap, 100);
 				Bitmap webpBitmap = WebPFactory.nativeDecodeByteArray(webpImageData, null);
 				_imageView.setImageBitmap(webpBitmap);
 				

@@ -5,11 +5,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := webpbackport
 
 LOCAL_SRC_FILES := \
+	android_backport_webp.cpp \
 	android_backport_webp_WebPFactory.cpp
 	
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
-	../webp/include
+	$(LOCAL_PATH)/../webp/include
 	
 LOCAL_STATIC_LIBRARIES := \
 	libwebp-decode \
