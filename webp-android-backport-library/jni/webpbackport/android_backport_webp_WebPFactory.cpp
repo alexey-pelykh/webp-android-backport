@@ -20,7 +20,116 @@ extern "C" {
 JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByteArray
   (JNIEnv *jniEnv, jclass, jbyteArray byteArray, jobject options)
 {
-	return 0;
+	// Check if input is valid
+	if(!byteArray)
+	{
+		jniEnv->ThrowNew(jrefs::java::lang::NullPointerException->jclassRef, "Input buffer can not be null");
+		return 0;
+	}
+
+	// Log what version of WebP is used
+	__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Using WebP Decoder %08x", WebPGetDecoderVersion());
+
+	// Lock buffer
+	jbyte* inputBuffer = jniEnv->GetByteArrayElements(byteArray, NULL);
+	size_t inputBufferLen = jniEnv->GetArrayLength(byteArray);
+
+	// Validate image
+	int bitmapWidth = 0;
+	int bitmapHeight = 0;
+	if(!WebPGetInfo((uint8_t*)inputBuffer, inputBufferLen, &bitmapWidth, &bitmapHeight))
+	{
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Invalid WebP format");
+		return 0;
+	}
+
+	// Check if size is all what we were requested to do
+	if(options && jniEnv->GetBooleanField(options, jrefs::android::graphics::BitmapFactory->Options.inJustDecodeBounds) == JNI_TRUE)
+	{
+		// Set values
+		jniEnv->SetIntField(options, jrefs::android::graphics::BitmapFactory->Options.outWidth, bitmapWidth);
+		jniEnv->SetIntField(options, jrefs::android::graphics::BitmapFactory->Options.outHeight, bitmapHeight);
+
+		// Unlock buffer
+		jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+
+		return 0;
+	}
+	__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Decoding %dx%d bitmap", bitmapWidth, bitmapHeight);
+
+	// Create bitmap
+	jobject value__ARGB_8888 = jniEnv->GetStaticObjectField(jrefs::android::graphics::Bitmap->Config.jclassRef, jrefs::android::graphics::Bitmap->Config.ARGB_8888);
+	__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Creating Bitmap with %p format ref", value__ARGB_8888);
+	jobject outputBitmap = jniEnv->CallStaticObjectMethod(jrefs::android::graphics::Bitmap->jclassRef, jrefs::android::graphics::Bitmap->createBitmap,
+		(jint)bitmapWidth, (jint)bitmapHeight,
+		value__ARGB_8888);
+	if(!outputBitmap)
+	{
+		jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to allocate Bitmap");
+		return 0;
+	}
+	//outputBitmap = jniEnv->NewLocalRef(outputBitmap);
+
+	// Get information about bitmap passed
+	AndroidBitmapInfo bitmapInfo;
+	if(AndroidBitmap_getInfo(jniEnv, outputBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
+	{
+		jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to get Bitmap information");
+		return 0;
+	}
+
+	// Lock pixels
+	void* bitmapPixels = 0;
+	if(AndroidBitmap_lockPixels(jniEnv, outputBitmap, &bitmapPixels) != ANDROID_BITMAP_RESUT_SUCCESS)
+	{
+		jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to lock Bitmap pixels");
+		return 0;
+	}
+
+	// Decode to ARGB
+	if(!WebPDecodeRGBAInto((uint8_t*)inputBuffer, inputBufferLen, (uint8_t*)bitmapPixels, bitmapInfo.height * bitmapInfo.stride, bitmapInfo.stride))
+	{
+		AndroidBitmap_unlockPixels(jniEnv, outputBitmap);
+		jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to unlock Bitmap pixels");
+		return 0;
+	}
+
+	// Transcode buffer from ARGB to RGBA
+	uint8_t* buf = (uint8_t*)bitmapPixels;
+	for (int y = 0; y < bitmapInfo.height; ++y)
+	{
+		uint8_t* row = buf + y * bitmapInfo.stride;
+		for(int x = 0; x < bitmapInfo.width; x++)
+		{
+			uint8_t savedAlpha = row[0];
+			row[0] = row[1];
+			row[1] = row[2];
+			row[2] = row[3];
+			row[3] = savedAlpha;
+			row += 4;
+		}
+	}
+
+	// Unlock pixels
+	if(AndroidBitmap_unlockPixels(jniEnv, outputBitmap) != ANDROID_BITMAP_RESUT_SUCCESS)
+	{
+		jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to unlock Bitmap pixels");
+		return 0;
+	}
+	
+	// Unlock buffer
+	jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
+
+	return outputBitmap;
 }
 
 #define SK_A32_BITS     8
@@ -59,15 +168,18 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 #define SkGetPackedG16(color)   (((unsigned)(color) >> SK_G16_SHIFT) & SK_G16_MASK)
 #define SkGetPackedB16(color)   (((unsigned)(color) >> SK_B16_SHIFT) & SK_B16_MASK)
 
-static inline unsigned SkR16ToR32(unsigned r) {
+static inline unsigned SkR16ToR32(unsigned r)
+{
 	return (r << (8 - SK_R16_BITS)) | (r >> (2 * SK_R16_BITS - 8));
 }
 
-static inline unsigned SkG16ToG32(unsigned g) {
+static inline unsigned SkG16ToG32(unsigned g)
+{
 	return (g << (8 - SK_G16_BITS)) | (g >> (2 * SK_G16_BITS - 8));
 }
 
-static inline unsigned SkB16ToB32(unsigned b) {
+static inline unsigned SkB16ToB32(unsigned b)
+{
 	return (b << (8 - SK_B16_BITS)) | (b >> (2 * SK_B16_BITS - 8));
 }
 
@@ -116,7 +228,7 @@ static ScanlineImporter ChooseImporter(int config)
 	}
 }
 
-static uint32_t GetDestinationScanlineStride(int config) 
+static uint32_t GetDestinationScanlinePixelByteSize(int config) 
 {
 	switch (config) {
 	case ANDROID_BITMAP_FORMAT_RGBA_8888:
@@ -172,7 +284,7 @@ JNIEXPORT jbyteArray JNICALL Java_android_backport_webp_WebPFactory_nativeEncode
 	// Convert color space
 	const uint8_t* src = (uint8_t*)bitmapPixels;
 	const uint32_t src_stride = bitmapInfo.stride;
-	const uint32_t dst_stride = GetDestinationScanlineStride(bitmapInfo.format) * bitmapInfo.width;
+	const uint32_t dst_stride = GetDestinationScanlinePixelByteSize(bitmapInfo.format) * bitmapInfo.width;
 	const ScanlineImporter scanline_import = ChooseImporter(bitmapInfo.format);
 
 	uint8_t* dst = new uint8_t[dst_stride * bitmapInfo.height];

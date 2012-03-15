@@ -41,13 +41,25 @@ namespace graphics {
 
 jclass_Bitmap* Bitmap = 0;
 jclass_Bitmap::jclass_Bitmap(JNIEnv* jniEnv)
+	: Config(jniEnv)
 {
 	jclassRef = jniEnv->FindClass("android/graphics/Bitmap");
 	assert(jclassRef == 0);
+
 	createBitmap = jniEnv->GetStaticMethodID(jclassRef,
 		"createBitmap",
 		"(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
 	assert(createBitmap);
+}
+jclass_Bitmap::jclass_Config::jclass_Config(JNIEnv* jniEnv)
+{
+	jclassRef = jniEnv->FindClass("android/graphics/Bitmap$Config");
+	assert(jclassRef == 0);
+
+	ARGB_8888 = jniEnv->GetStaticFieldID(jclassRef,
+		"ARGB_8888",
+		"Landroid/graphics/Bitmap$Config;");
+	assert(ARGB_8888);
 }
 
 jclass_BitmapFactory* BitmapFactory = 0;

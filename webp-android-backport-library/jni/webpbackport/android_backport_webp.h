@@ -51,6 +51,15 @@ struct jclass_Bitmap {
 	// http://developer.android.com/reference/android/graphics/Bitmap.html#createBitmap(int, int, android.graphics.Bitmap.Config)
 	jmethodID createBitmap;
 
+	struct jclass_Config {
+		jclass_Config(JNIEnv* jniEnv);
+
+		// http://developer.android.com/reference/android/graphics/Bitmap.Config.html
+		jclass jclassRef;
+
+		jfieldID ARGB_8888;
+	} Config;
+
 }; // struct jclass_Bitmap
 extern jclass_Bitmap* Bitmap;
 
