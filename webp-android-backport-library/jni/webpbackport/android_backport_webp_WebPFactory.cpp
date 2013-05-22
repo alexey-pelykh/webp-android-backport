@@ -2,10 +2,10 @@
 #include "android_backport_webp.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <android/bitmap.h>
 #include <android/log.h>
 #include <webp/decode.h>
-#include <webp/decode_vp8.h>
 #include <webp/encode.h>
 
 #ifdef __cplusplus
