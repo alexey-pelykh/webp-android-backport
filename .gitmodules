@@ -1,3 +1,0 @@
-[submodule "webp-android-backport-library/jni/webp"]
-	path = webp-android-backport-library/jni/webp
-	url = https://android.googlesource.com/platform/external/webp
