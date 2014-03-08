@@ -1,3 +1,3 @@
 [submodule "webp-android-backport-library/jni/webp"]
 	path = webp-android-backport-library/jni/webp
-	url = https://git.chromium.org/git/webm/libwebp.git
+	url = https://chromium.googlesource.com/webm/libwebp
