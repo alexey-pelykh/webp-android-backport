@@ -2,6 +2,7 @@ package com.example.backport.webp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
@@ -94,17 +96,32 @@ public class SampleActivity extends Activity {
 		case REQUEST_CODE__IMAGE_SELECTED:
 			if (resultCode == RESULT_OK) {
 				Uri selectedImage = intent.getData();
-				String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
+				Bitmap selectedBitmap;
+
+				// Try pre-KitKat approach
 				Cursor cursor = getContentResolver().query(selectedImage,
-						filePathColumn, null, null, null);
+						new String[] { MediaStore.Images.Media.DATA }, null, null, null);
 				cursor.moveToFirst();
 
-				int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+				int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 				String filePath = cursor.getString(columnIndex);
 				cursor.close();
 
-				Bitmap selectedBitmap = BitmapFactory.decodeFile(filePath);
+				if (filePath != null) {
+					selectedBitmap = BitmapFactory.decodeFile(filePath);
+				} else {
+					ParcelFileDescriptor imageFd = null;
+					try {
+						imageFd = getContentResolver().openFileDescriptor(selectedImage, "r");
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+					FileDescriptor imageSource = imageFd.getFileDescriptor();
+
+					selectedBitmap = BitmapFactory.decodeFileDescriptor(imageSource);
+				}
+
 				byte[] webpImageData = WebPFactory.nativeEncodeBitmap(selectedBitmap, 100);
 				try {
 					FileOutputStream dumpStream = new FileOutputStream(new File(Environment.getExternalStorageDirectory(), "dump.webp"));

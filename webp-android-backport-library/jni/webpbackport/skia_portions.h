@@ -1,5 +1,6 @@
 // This file is composed from parts from skia library (https://github.com/google/skia/)
 // Please check skia license if it fits (https://github.com/google/skia/blob/master/LICENSE)
+
 #if !defined(SK_CPU_BENDIAN) && !defined(SK_CPU_LENDIAN)
     #if defined(__sparc) || defined(__sparc__) || \
       defined(_POWER) || defined(__powerpc__) || \
@@ -76,32 +77,3 @@ static inline unsigned SkB16ToB32(unsigned b)
 #define SkPacked16ToR32(c)      SkR16ToR32(SkGetPackedR16(c))
 #define SkPacked16ToG32(c)      SkG16ToG32(SkGetPackedG16(c))
 #define SkPacked16ToB32(c)      SkB16ToB32(SkGetPackedB16(c))
-
-typedef void (*ScanlineImporter)(const uint8_t* in, uint8_t* out, int width);
-
-static void ARGB_8888_To_RGBA(const uint8_t* in, uint8_t* rgba, int width)
-{
-	const uint32_t* src = (const uint32_t*)in;
-	for (int i = 0; i < width; ++i)
-	{
-		const uint32_t c = *src++;
-		rgba[0] = SkGetPackedB32(c);
-		rgba[1] = SkGetPackedG32(c);
-		rgba[2] = SkGetPackedR32(c);
-		rgba[3] = SkGetPackedA32(c);
-		rgba += 4;
-	}
-}
-
-static void RGB_565_To_RGB(const uint8_t* in, uint8_t* rgb, int width)
-{
-	const uint16_t* src = (const uint16_t*)in;
-	for (int i = 0; i < width; ++i)
-	{
-		const uint16_t c = *src++;
-		rgb[0] = SkPacked16ToB32(c);
-		rgb[1] = SkPacked16ToG32(c);
-		rgb[2] = SkPacked16ToR32(c);
-		rgb += 3;
-	}
-}
