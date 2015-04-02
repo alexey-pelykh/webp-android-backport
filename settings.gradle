@@ -1,0 +1,2 @@
+include ':webp-android-backport-library'
+include ':example-project'

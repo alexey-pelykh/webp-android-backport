@@ -8,16 +8,14 @@ import android.graphics.BitmapFactory;
  * @author Alexey Pelykh
  */
 public final class WebPFactory {
-	
-	// Load library at class loading
 	static {
 		System.loadLibrary("webpbackport");
-	};
+	}
 
 	/**
 	 * Decodes byte array to bitmap 
 	 * @param data Byte array with WebP bitmap data
-	 * @param opts Options to control decoding. Accepts null
+	 * @param options Options to control decoding. Accepts null
 	 * @return Decoded bitmap
 	 */
 	public static native Bitmap nativeDecodeByteArray(byte[] data, BitmapFactory.Options options);
@@ -29,5 +27,4 @@ public final class WebPFactory {
 	 * @return Encoded byte array
 	 */
 	public static native byte[] nativeEncodeBitmap(Bitmap bitmap, int quality);
-	
 }
