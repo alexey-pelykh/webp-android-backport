@@ -115,6 +115,137 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 	return outputBitmap;
 }
 
+/*
+ * Class:     android_backport_webp_WebPFactory
+ * Method:    nativeDecodeFile
+ * Signature: (Ljava/lang/String;Landroid/graphics/BitmapFactory/Options;)Landroid/graphics/Bitmap;
+ */
+JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeFile
+  (JNIEnv *jniEnv, jclass, jstring path, jobject options)
+{
+	// Check if input is valid
+	if(!path)
+	{
+		jniEnv->ThrowNew(jrefs::java::lang::NullPointerException->jclassRef, "path can not be null");
+		return 0;
+	}
+
+	// Log what version of WebP is used
+	//__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Using WebP Decoder %08x", WebPGetDecoderVersion());
+
+    char *inputBuffer;
+    size_t inputBufferLen;
+    const char* filePath = jniEnv->GetStringUTFChars(path, 0);
+    FILE *file = NULL;
+    file = fopen(filePath, "rb");
+    jniEnv->ReleaseStringUTFChars(path, filePath);
+    if(file)
+    {
+		fseek(file, 0, SEEK_END);
+		long file_len = ftell(file);
+		fseek(file, 0, SEEK_SET);
+        inputBuffer = (char *) malloc(file_len * sizeof(char));
+		if (inputBuffer == NULL)
+		{
+			fclose(file);
+			jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "malloc error");
+			return 0;
+		}
+        inputBufferLen = fread(inputBuffer, sizeof(char), file_len, file);
+        if (inputBufferLen != file_len)
+        {
+            free(inputBuffer);
+			fclose(file);
+			jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Read file error");
+			return 0;
+        }
+		fclose(file);
+    } else {
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Can not open file");
+		return 0;
+	}
+
+	// Validate image
+	int bitmapWidth = 0;
+	int bitmapHeight = 0;
+	if(!WebPGetInfo((uint8_t*)inputBuffer, inputBufferLen, &bitmapWidth, &bitmapHeight))
+	{
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Invalid WebP format");
+		return 0;
+	}
+
+	// Check if size is all what we were requested to do
+	if(options && jniEnv->GetBooleanField(options, jrefs::android::graphics::BitmapFactory->Options.inJustDecodeBounds) == JNI_TRUE)
+	{
+		// Set values
+		jniEnv->SetIntField(options, jrefs::android::graphics::BitmapFactory->Options.outWidth, bitmapWidth);
+		jniEnv->SetIntField(options, jrefs::android::graphics::BitmapFactory->Options.outHeight, bitmapHeight);
+
+		// Release buffer
+        free(inputBuffer);
+
+		return 0;
+	}
+	//__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Decoding %dx%d bitmap", bitmapWidth, bitmapHeight);
+
+	// Create bitmap
+	jobject value__ARGB_8888 = jniEnv->GetStaticObjectField(jrefs::android::graphics::Bitmap->Config.jclassRef, jrefs::android::graphics::Bitmap->Config.ARGB_8888);
+	jobject outputBitmap = jniEnv->CallStaticObjectMethod(jrefs::android::graphics::Bitmap->jclassRef, jrefs::android::graphics::Bitmap->createBitmap,
+														  (jint)bitmapWidth, (jint)bitmapHeight,
+														  value__ARGB_8888);
+	if(!outputBitmap)
+	{
+        free(inputBuffer);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to allocate Bitmap");
+		return 0;
+	}
+	outputBitmap = jniEnv->NewLocalRef(outputBitmap);
+
+	// Get information about bitmap passed
+	AndroidBitmapInfo bitmapInfo;
+	if(AndroidBitmap_getInfo(jniEnv, outputBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
+	{
+        free(inputBuffer);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to get Bitmap information");
+		return 0;
+	}
+
+	// Lock pixels
+	void* bitmapPixels = 0;
+	if(AndroidBitmap_lockPixels(jniEnv, outputBitmap, &bitmapPixels) != ANDROID_BITMAP_RESUT_SUCCESS)
+	{
+        free(inputBuffer);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to lock Bitmap pixels");
+		return 0;
+	}
+
+	// Decode to ARGB
+	if(!WebPDecodeRGBAInto((uint8_t*)inputBuffer, inputBufferLen, (uint8_t*)bitmapPixels, bitmapInfo.height * bitmapInfo.stride, bitmapInfo.stride))
+	{
+		AndroidBitmap_unlockPixels(jniEnv, outputBitmap);
+        free(inputBuffer);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to unlock Bitmap pixels");
+		return 0;
+	}
+
+	// Unlock pixels
+	if(AndroidBitmap_unlockPixels(jniEnv, outputBitmap) != ANDROID_BITMAP_RESUT_SUCCESS)
+	{
+        free(inputBuffer);
+		jniEnv->DeleteLocalRef(outputBitmap);
+		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to unlock Bitmap pixels");
+		return 0;
+	}
+
+	// Release buffer
+    free(inputBuffer);
+
+	return outputBitmap;
+}
+
 #include "skia_portions.h"
 
 typedef void (*ScanlineImporter)(const uint8_t* in, uint8_t* out, int width);
