@@ -7,18 +7,18 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-			resources.srcDirs = [ 'src' ]
-			renderscript.srcDirs = [ 'src' ]
-			res.srcDirs = [ 'res' ]
-			// Don't use native sources building using gradle,
-			// since gradle ignores custom Android.mk
+            resources.srcDirs = [ 'src' ]
+            renderscript.srcDirs = [ 'src' ]
+            res.srcDirs = [ 'res' ]
+            // Don't use native sources building using gradle,
+            // since gradle ignores custom Android.mk
             jni.srcDirs = []
-			jniLibs.srcDirs = ['libs']
+            jniLibs.srcDirs = ['libs']
         }
     }
 
-	compileSdkVersion 22
-	buildToolsVersion '22.0.1'
+    compileSdkVersion 23
+    buildToolsVersion '23.0.1'
 
     lintOptions {
         abortOnError false
@@ -26,47 +26,59 @@ android {
 }
 
 task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
-	def ndkPath = plugins.getPlugin('com.android.library').sdkHandler.ndkFolder.absolutePath
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine ndkPath + '/ndk-build.cmd',
-				'-C', file('.').absolutePath,
-				'-j', Runtime.runtime.availableProcessors(),
-				'all'
-	} else {
-		commandLine "sh", ndkPath + '/ndk-build',
-				'-C', file('.').absolutePath,
-				'-j', Runtime.runtime.availableProcessors(),
-				'all'
-	}
+    def ndkPath = android.ndkDirectory
+    if (ndkPath != null) {
+        ndkPath = ndkPath.absolutePath;
+    }
+    if (ndkPath == null) {
+        throw new GradleException("NDK not found.")
+    }
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine ndkPath + '/ndk-build.cmd',
+                '-C', file('.').absolutePath,
+                '-j', Runtime.runtime.availableProcessors(),
+                'all'
+    } else {
+        commandLine "sh", ndkPath + '/ndk-build',
+                '-C', file('.').absolutePath,
+                '-j', Runtime.runtime.availableProcessors(),
+                'all'
+    }
 
-	doLast {
-		if (execResult.exitValue != 0) {
-			throw new GradleException()
-		}
-	}
+    doLast {
+        if (execResult.exitValue != 0) {
+            throw new GradleException()
+        }
+    }
 }
 
 task cleanNative(type: Exec, description: 'Clean JNI object files') {
-	def ndkPath = plugins.getPlugin('com.android.library').sdkHandler.ndkFolder.absolutePath
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine ndkPath + '/ndk-build.cmd',
-				'-C', file('.').absolutePath,
-				'clean'
-	} else {
-		commandLine "sh", ndkPath + '/ndk-build',
-				'-C', file('.').absolutePath,
-				'clean'
-	}
+    def ndkPath = android.ndkDirectory
+    if (ndkPath != null) {
+        ndkPath = ndkPath.absolutePath;
+    }
+    if (ndkPath == null) {
+        throw new GradleException("NDK not found.")
+    }
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine ndkPath + '/ndk-build.cmd',
+                '-C', file('.').absolutePath,
+                'clean'
+    } else {
+        commandLine "sh", ndkPath + '/ndk-build',
+                '-C', file('.').absolutePath,
+                'clean'
+    }
 
-	doLast {
-		if (execResult.exitValue != 0) {
-			throw new GradleException()
-		}
-	}
+    doLast {
+        if (execResult.exitValue != 0) {
+            throw new GradleException()
+        }
+    }
 }
 
 clean.dependsOn 'cleanNative'
 
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn buildNative
+    compileTask -> compileTask.dependsOn buildNative
 }
