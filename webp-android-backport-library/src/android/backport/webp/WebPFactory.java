@@ -19,6 +19,15 @@ public final class WebPFactory {
 	 * @return Decoded bitmap
 	 */
 	public static native Bitmap nativeDecodeByteArray(byte[] data, BitmapFactory.Options options);
+
+	/**
+     * Decodes file to bitmap
+     *
+     * @param path    WebP file path
+     * @param options Options to control decoding. Accepts null
+     * @return Decoded bitmap
+     */
+    private static native Bitmap nativeDecodeFile(String path, BitmapFactory.Options options);
 	
 	/**
 	 * Encodes bitmap into byte array
