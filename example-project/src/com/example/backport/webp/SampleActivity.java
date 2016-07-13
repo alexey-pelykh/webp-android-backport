@@ -40,9 +40,9 @@ public class SampleActivity extends Activity {
 		}
 		return os.toByteArray();
 	}
-	
+
 	ImageView _imageView = null;
-	
+
 	File _captureDestination = null;
 
 	/** Called when the activity is first created. */
@@ -76,16 +76,26 @@ public class SampleActivity extends Activity {
 		});
 
 		final Button captureAndLoadImageButton = (Button) findViewById(R.id.captureImage);
-		captureAndLoadImageButton
-				.setOnClickListener(new View.OnClickListener() {
-					public void onClick(View v) {
-						Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-						_captureDestination = new File(Environment.getExternalStorageDirectory(), "camera.jpg");
-						intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(_captureDestination));
+		captureAndLoadImageButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+				_captureDestination = new File(Environment.getExternalStorageDirectory(), "camera.jpg");
+				intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(_captureDestination));
 
-						startActivityForResult(intent, REQUEST_CODE__IMAGE_CAPTURED);
-					}
-				});
+				startActivityForResult(intent, REQUEST_CODE__IMAGE_CAPTURED);
+			}
+		});
+
+		findViewById(R.id.load_embedded_image_with_alpha_channel).setOnClickListener(
+			new View.OnClickListener() {
+				@Override public void onClick(View view) {
+					InputStream rawImageStream = getResources().openRawResource(R.raw.alpha_image);
+					byte[] data = streamToBytes(rawImageStream);
+					final Bitmap webpBitmap = WebPFactory.nativeDecodeByteArray(
+							data, null);
+					_imageView.setImageBitmap(webpBitmap);
+				}
+			});
 	}
 
 	@Override
@@ -151,7 +161,7 @@ public class SampleActivity extends Activity {
 				}
 				Bitmap webpBitmap = WebPFactory.nativeDecodeByteArray(webpImageData, null);
 				_imageView.setImageBitmap(webpBitmap);
-				
+
 				_captureDestination = null;
 			}
 			break;

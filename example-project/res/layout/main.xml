@@ -23,7 +23,12 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="center_vertical"/>
 	</LinearLayout>
-	
+
+	<Button android:id="@+id/load_embedded_image_with_alpha_channel"
+		android:text="Load embedded image witch alpha channel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"/>
+
 	<ImageView android:id="@+id/imageView"
 	    android:src="@drawable/ic_launcher"
 	    android:scaleType="fitCenter"
