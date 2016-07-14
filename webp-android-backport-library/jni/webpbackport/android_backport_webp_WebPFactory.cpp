@@ -100,6 +100,22 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 		return 0;
 	}
 
+	// pre-multiply the alpha value into the r-g-b channel of each pixel
+	uint8_t* pixelsAddr = (uint8_t*)bitmapPixels;
+	int index = 0;
+	float normalizedAlpha = 1;
+	int alpha = 255;
+	int end = bitmapInfo.height * bitmapInfo.stride - 4;
+	while(index < end)
+	{
+		alpha = pixelsAddr[index+3];
+		normalizedAlpha = alpha / 255.0;
+		pixelsAddr[index] = (uint8_t)(pixelsAddr[index]  * normalizedAlpha);
+		pixelsAddr[index+1] = (uint8_t)(pixelsAddr[index+1]  * normalizedAlpha);
+		pixelsAddr[index+2] = (uint8_t)(pixelsAddr[index+2]  * normalizedAlpha);
+		index += 4;
+	}
+
 	// Unlock pixels
 	if(AndroidBitmap_unlockPixels(jniEnv, outputBitmap) != ANDROID_BITMAP_RESUT_SUCCESS)
 	{
@@ -108,7 +124,7 @@ JNIEXPORT jobject JNICALL Java_android_backport_webp_WebPFactory_nativeDecodeByt
 		jniEnv->ThrowNew(jrefs::java::lang::RuntimeException->jclassRef, "Failed to unlock Bitmap pixels");
 		return 0;
 	}
-	
+
 	// Unlock buffer
 	jniEnv->ReleaseByteArrayElements(byteArray, inputBuffer, JNI_ABORT);
 
